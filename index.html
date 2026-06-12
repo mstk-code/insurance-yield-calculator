@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>保険の実質利回り・コスト簡易診断 | マネー暴きツール</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Noto Sans JP', 'Outfit', 'sans-serif'],
+            number: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              emerald: '#10B981',
+              emeraldDark: '#059669',
+              emeraldLight: '#E6F4EA',
+              coral: '#EF4444',
+              coralDark: '#DC2626',
+              coralLight: '#FEE2E2',
+              orange: '#F97316',
+              orangeDark: '#EA580C',
+              orangeLight: '#FFEDD5',
+              slate: '#1E293B',
+              slateLight: '#F8FAFC',
+            }
+          },
+          boxShadow: {
+            premium: '0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 4px 12px -2px rgba(0, 0, 0, 0.03)',
+            glowEmerald: '0 0 20px 0 rgba(16, 185, 129, 0.2)',
+            glowCoral: '0 0 20px 0 rgba(239, 68, 68, 0.2)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* アニメーション用クラス */
+    .fade-in-up {
+      animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    /* パルス光効果 */
+    .pulse-glow {
+      animation: pulseGlow 2s infinite ease-in-out;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 0.9; transform: scale(1.02); }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-tr from-emerald-50/50 via-slate-50 to-orange-50/30 min-h-screen text-brand-slate font-sans antialiased pb-12">
+
+  <div class="absolute top-0 left-0 right-0 h-[400px] bg-gradient-to-b from-emerald-500/10 to-transparent -z-10 pointer-events-none"></div>
+
+  <div class="max-w-md mx-auto px-4 pt-8">
+    
+    <header class="text-center mb-8 fade-in-up">
+      <div class="inline-flex items-center gap-2 px-3 py-1 bg-emerald-100/80 backdrop-blur-md rounded-full text-emerald-800 text-xs font-bold mb-3 border border-emerald-200/50">
+        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+        <span>完全中立・かんたんシミュレーター</span>
+      </div>
+      <h1 class="text-2xl font-black tracking-tight text-slate-800">
+        保険の<span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">「実質利回り」</span>暴きツール
+      </h1>
+      <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+        設計書にだまされないで！<br>表面上の想定利回りから、隠れた「実質コスト」を30秒で簡単計算。
+      </p>
+    </header>
+
+    <section class="bg-white/90 backdrop-blur-md border border-slate-100 shadow-premium rounded-3xl p-6 mb-6 fade-in-up" style="animation-delay: 0.1s;">
+      <h2 class="text-sm font-bold text-slate-400 mb-6 uppercase tracking-wider flex items-center gap-1.5">
+        <i data-lucide="keyboard" class="w-4 h-4 text-emerald-500"></i>
+        設計書の数値を入力
+      </h2>
+
+      <div class="mb-6">
+        <label for="monthly-premium-number" class="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
+          毎月の保険料
+          <span class="text-xs font-normal text-slate-400">(A)</span>
+        </label>
+        <div class="relative flex items-center">
+          <input type="text" inputmode="numeric" id="monthly-premium-number" class="w-full text-left font-number font-extrabold text-2xl text-emerald-600 focus:text-emerald-700 bg-slate-50/50 focus:bg-white border border-slate-200/80 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 rounded-2xl pl-5 pr-12 py-3.5 focus:outline-none transition-all shadow-sm" value="15,000">
+          <span class="absolute right-5 text-sm font-bold text-slate-400">円</span>
+        </div>
+        <div class="flex justify-between gap-1.5 mt-3">
+          <button onclick="adjustValue('monthly-premium', -10000)" class="flex-1 py-2 bg-white hover:bg-slate-50 border border-slate-200/50 rounded-xl text-[11px] font-bold text-slate-600 transition-all active:scale-95 shadow-sm">-1万円</button>
+          <button onclick="adjustValue('monthly-premium', -1000)" class="flex-1 py-2 bg-white hover:bg-slate-50 border border-slate-200/50 rounded-xl text-[11px] font-bold text-slate-600 transition-all active:scale-95 shadow-sm">-千円</button>
+          <button onclick="adjustValue('monthly-premium', 1000)" class="flex-1 py-2 bg-white hover:bg-slate-50 border border-slate-200/50 rounded-xl text-[11px] font-bold text-slate-600 transition-all active:scale-95 shadow-sm">+千円</button>
+          <button onclick="adjustValue('monthly-premium', 10000)" class="flex-1 py-2 bg-white hover:bg-slate-50 border border-slate-200/50 rounded-xl text-[11px] font-bold text-slate-600 transition-all active:scale-95 shadow-sm">+1万円</button>
+        </div>
+      </div>
+
+      <div class="mb-6 border-t border-slate-50 pt-5">
+        <label for="payment-period-number" class="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
+          支払い期間
+          <span class="text-xs font-normal text-slate-400">(B)</span>
+        </label>
+        <div class="relative flex items-center">
+          <input type="text" inputmode="numeric" id="payment-period-number" class="w-full text-left font-number font-extrabold text-2xl text-emerald-600 focus:text-emerald-700 bg-slate-50/50 focus:bg-white border border-slate-200/80 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 rounded-2xl pl-5 pr-12 py-3.5 focus:outline-none transition-all shadow-sm" value="20">
+          <span class="absolute right-5 text-sm font-bold text-slate-400">年</span>
+        </div>
+        <div class="flex justify-between gap-1.5 mt-3">
+          <button onclick="adjustValue('payment-period', -5)" class="flex-1 py-2 bg-white hover:bg-slate-50 border border-slate-200/50 rounded-xl text-[11px] font-bold text-slate-600 transition-all active:scale-95 shadow-sm">-5年</button>
+          <button onclick="adjustValue('payment-period', -1)" class="flex-1 py-2 bg-white hover:bg-slate-50 border border-slate-200/50 rounded-xl text-[11px] font-bold text-slate-600 transition-all active:scale-95 shadow-sm">-1年</button>
+          <button onclick="adjustValue('payment-period', 1)" class="flex-1 py-2 bg-white hover:bg-slate-50 border border-slate-200/50 rounded-xl text-[11px] font-bold text-slate-600 transition-all active:scale-95 shadow-sm">+1年</button>
+          <button onclick="adjustValue('payment-period', 5)" class="flex-1 py-2 bg-white hover:bg-slate-50 border border-slate-200/50 rounded-xl text-[11px] font-bold text-slate-600 transition-all active:scale-95 shadow-sm">+5年</button>
+        </div>
+      </div>
+
+      <div class="mb-6 border-t border-slate-50 pt-5">
+        <label for="return-amount-number" class="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
+          満期・解約返戻金
+          <span class="text-xs font-normal text-slate-400">(C)</span>
+        </label>
+        <div class="relative flex items-center">
+          <input type="text" inputmode="numeric" id="return-amount-number" class="w-full text-left font-number font-extrabold text-2xl text-emerald-600 focus:text-emerald-700 bg-slate-50/50 focus:bg-white border border-slate-200/80 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 rounded-2xl pl-5 pr-12 py-3.5 focus:outline-none transition-all shadow-sm" value="4,000,000">
+          <span class="absolute right-5 text-sm font-bold text-slate-400">円</span>
+        </div>
+        <div class="flex justify-between gap-1.5 mt-3">
+          <button onclick="adjustValue('return-amount', -500000)" class="flex-1 py-2 bg-white hover:bg-slate-50 border border-slate-200/50 rounded-xl text-[11px] font-bold text-slate-600 transition-all active:scale-95 shadow-sm">-50万円</button>
+          <button onclick="adjustValue('return-amount', -100000)" class="flex-1 py-2 bg-white hover:bg-slate-50 border border-slate-200/50 rounded-xl text-[11px] font-bold text-slate-600 transition-all active:scale-95 shadow-sm">-10万円</button>
+          <button onclick="adjustValue('return-amount', 100000)" class="flex-1 py-2 bg-white hover:bg-slate-50 border border-slate-200/50 rounded-xl text-[11px] font-bold text-slate-600 transition-all active:scale-95 shadow-sm">+10万円</button>
+          <button onclick="adjustValue('return-amount', 500000)" class="flex-1 py-2 bg-white hover:bg-slate-50 border border-slate-200/50 rounded-xl text-[11px] font-bold text-slate-600 transition-all active:scale-95 shadow-sm">+50万円</button>
+        </div>
+      </div>
+
+      <div class="mb-6 border-t border-slate-50 pt-5">
+        <label for="surface-yield-number" class="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1">
+          設計書の想定（表面）利回り
+          <span class="text-xs font-normal text-slate-400">(D)</span>
+        </label>
+        <div class="relative flex items-center">
+          <input type="text" inputmode="decimal" id="surface-yield-number" class="w-full text-left font-number font-extrabold text-2xl text-emerald-600 focus:text-emerald-700 bg-slate-50/50 focus:bg-white border border-slate-200/80 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 rounded-2xl pl-5 pr-12 py-3.5 focus:outline-none transition-all shadow-sm" value="3.0">
+          <span class="absolute right-5 text-sm font-bold text-slate-400">%</span>
+        </div>
+        <div class="flex justify-between gap-1.5 mt-3">
+          <button onclick="adjustValue('surface-yield', -1.0)" class="flex-1 py-2 bg-white hover:bg-slate-50 border border-slate-200/50 rounded-xl text-[11px] font-bold text-slate-600 transition-all active:scale-95 shadow-sm">-1.0%</button>
+          <button onclick="adjustValue('surface-yield', -0.1)" class="flex-1 py-2 bg-white hover:bg-slate-50 border border-slate-200/50 rounded-xl text-[11px] font-bold text-slate-600 transition-all active:scale-95 shadow-sm">-0.1%</button>
+          <button onclick="adjustValue('surface-yield', 0.1)" class="flex-1 py-2 bg-white hover:bg-slate-50 border border-slate-200/50 rounded-xl text-[11px] font-bold text-slate-600 transition-all active:scale-95 shadow-sm">+0.1%</button>
+          <button onclick="adjustValue('surface-yield', 1.0)" class="flex-1 py-2 bg-white hover:bg-slate-50 border border-slate-200/50 rounded-xl text-[11px] font-bold text-slate-600 transition-all active:scale-95 shadow-sm">+1.0%</button>
+        </div>
+      </div>
+
+      <button id="calc-btn" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-2xl font-bold text-base shadow-lg hover:shadow-emerald-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4">
+        <i data-lucide="search" class="w-5 h-5"></i>
+        <span>実質コストを暴き出す！</span>
+      </button>
+
+    </section>
+
+    <div id="results-area" class="hidden space-y-6">
+
+      <section class="bg-white/90 backdrop-blur-md border border-slate-100 shadow-premium rounded-3xl p-6 fade-in-up">
+        <h3 class="text-sm font-bold text-slate-400 mb-5 uppercase tracking-wider flex items-center gap-1.5">
+          <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-500"></i>
+          お金の流れ・増減
+        </h3>
+
+        <div class="space-y-4">
+          <div>
+            <div class="flex justify-between text-xs font-bold text-slate-500 mb-1">
+              <span>支払う総額（元本）</span>
+              <span id="total-paid-display" class="font-number font-extrabold text-sm text-slate-700">0円</span>
+            </div>
+            <div class="w-full h-3.5 bg-slate-100 rounded-full overflow-hidden">
+              <div id="bar-total-paid" class="h-full bg-slate-400 rounded-full transition-all duration-1000 ease-out" style="width: 100%;"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-bold text-slate-500 mb-1">
+              <span>戻ってくる額（解約返戻金）</span>
+              <span id="return-amount-display" class="font-number font-extrabold text-sm text-emerald-600">0円</span>
+            </div>
+            <div class="w-full h-3.5 bg-slate-100 rounded-full overflow-hidden">
+              <div id="bar-return" class="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <div id="gain-card" class="mt-4 p-4 rounded-2xl flex items-center justify-between border transition-all">
+            <div class="flex items-center gap-3">
+              <div id="gain-icon-bg" class="p-2.5 rounded-xl flex items-center justify-center">
+                <i id="gain-icon" data-lucide="trending-up" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <p id="gain-label" class="text-xs font-bold text-slate-500">実際に増えた金額</p>
+                <p id="gain-display" class="font-number font-black text-xl">0円</p>
+              </div>
+            </div>
+            <span id="gain-percentage" class="text-xs font-extrabold px-2.5 py-1 rounded-full font-number">0%</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="grid grid-cols-2 gap-4">
+        
+        <section class="bg-gradient-to-b from-white to-emerald-50/30 border border-slate-100 shadow-premium rounded-3xl p-5 text-center flex flex-col items-center justify-between relative overflow-hidden fade-in-up">
+          <div class="absolute -top-6 -right-6 w-16 h-16 bg-emerald-500/5 rounded-full pointer-events-none"></div>
+          <div>
+            <span class="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mb-2">
+              <i data-lucide="check" class="w-3 h-3"></i>体感利回り
+            </span>
+            <h3 class="text-xs font-bold text-slate-400">実質利回り</h3>
+          </div>
+          
+          <div class="relative w-28 h-28 my-3 flex items-center justify-center">
+            <svg class="w-full h-full transform -rotate-90">
+              <circle cx="56" cy="56" r="48" stroke="#F1F5F9" stroke-width="8" fill="transparent"/>
+              <circle id="gauge-yield" cx="56" cy="56" r="48" stroke="#10B981" stroke-width="8" fill="transparent"
+                stroke-dasharray="301.6" stroke-dashoffset="301.6" stroke-linecap="round" class="transition-all duration-1000 ease-out"/>
+            </svg>
+            <div class="absolute flex flex-col items-center justify-center">
+              <span id="val-yield" class="font-number font-black text-2xl text-emerald-600 leading-none">0.00</span>
+              <span class="text-[10px] font-bold text-slate-400 mt-0.5">% / 年</span>
+            </div>
+          </div>
+
+          <p class="text-[10px] text-slate-500 leading-normal">
+            運用コストを差し引いた<br><strong class="text-emerald-600">あなた自身の実質利回り</strong>
+          </p>
+        </section>
+
+        <section class="bg-gradient-to-b from-white to-orange-50/30 border border-slate-100 shadow-premium rounded-3xl p-5 text-center flex flex-col items-center justify-between relative overflow-hidden fade-in-up">
+          <div class="absolute -top-6 -right-6 w-16 h-16 bg-orange-500/5 rounded-full pointer-events-none"></div>
+          <div>
+            <span class="inline-flex items-center gap-1 text-[10px] font-extrabold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full mb-2">
+              <i data-lucide="alert-triangle" class="w-3 h-3"></i>保険会社の手数料
+            </span>
+            <h3 class="text-xs font-bold text-slate-400">実質コスト</h3>
+          </div>
+          
+          <div class="relative w-28 h-28 my-3 flex items-center justify-center">
+            <svg class="w-full h-full transform -rotate-90">
+              <circle cx="56" cy="56" r="48" stroke="#F1F5F9" stroke-width="8" fill="transparent"/>
+              <circle id="gauge-cost" cx="56" cy="56" r="48" stroke="#F97316" stroke-width="8" fill="transparent"
+                stroke-dasharray="301.6" stroke-dashoffset="301.6" stroke-linecap="round" class="transition-all duration-1000 ease-out"/>
+            </svg>
+            <div class="absolute flex flex-col items-center justify-center">
+              <span id="val-cost" class="font-number font-black text-2xl text-orange-600 leading-none">0.00</span>
+              <span class="text-[10px] font-bold text-slate-400 mt-0.5">% / 年</span>
+            </div>
+          </div>
+
+          <p class="text-[10px] text-slate-500 leading-normal">
+            見かけ上の利回りから削られた<br><strong class="text-orange-600">保険会社の手数料率</strong>
+          </p>
+        </section>
+
+      </div>
+
+      <section id="cost-amount-card" class="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-100 shadow-premium rounded-3xl p-5 fade-in-up">
+        <div class="flex items-center gap-3.5">
+          <div class="p-3 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl text-white shadow-glowCoral flex items-center justify-center">
+            <i data-lucide="banknote" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-slate-500 mb-0.5">保険会社に抜かれている実質手数料総額</h4>
+            <div class="flex items-baseline">
+              <span id="total-cost-amount" class="font-number font-black text-2xl text-orange-600">0</span>
+              <span class="text-xs font-bold text-orange-700 ml-1">円</span>
+            </div>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-2.5 leading-relaxed">
+          ※想定利回り通りに手数料なしで運用できた場合と、解約返戻金の実際の差額（＝保険会社に削られたコストの推定額）です。
+        </p>
+      </section>
+
+      <section id="conclusion-box" class="relative overflow-hidden border border-red-200 shadow-premium rounded-3xl p-6 fade-in-up" style="background: linear-gradient(135deg, #FFF5F5 0%, #FFF 100%);">
+        
+        <div class="absolute -top-12 -right-12 w-32 h-32 bg-red-500/5 rounded-full pulse-glow pointer-events-none"></div>
+        <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-orange-500/5 rounded-full pulse-glow pointer-events-none" style="animation-delay: 1s;"></div>
+        
+        <div class="flex items-start gap-3.5 relative z-10">
+          <div class="p-2.5 bg-red-100 rounded-xl text-red-600 flex items-center justify-center shrink-0">
+            <i data-lucide="alert-octagon" class="w-6 h-6 animate-bounce"></i>
+          </div>
+          <div class="space-y-3.5">
+            <h3 class="font-black text-red-800 text-lg leading-tight">暴かれた保険の正体！</h3>
+            <p id="conclusion-text" class="text-sm font-semibold text-slate-700 leading-relaxed">
+              この保険は、見かけ上は増えているように見えますが、実態は<span class="text-emerald-600 font-bold bg-emerald-50 px-1 py-0.5 rounded text-base">【年利<span id="text-real-yield">0.00</span>%】</span>で増える商品です。市場の想定利回りが<span class="text-slate-800 font-bold bg-slate-100 px-1 py-0.5 rounded text-base">【<span id="text-surface-yield">0.00</span>%】</span>だとすると、差額の<span class="text-red-600 font-bold bg-red-50 px-1 py-0.5 rounded text-base">【<span id="text-real-cost">0.00</span>%】</span>分は保険会社の手数料（実質コスト）としてあなたから削られています！
+            </p>
+            
+            <div id="conclusion-money-highlight" class="p-3 bg-red-50/50 border border-red-100 rounded-2xl text-xs font-bold text-red-900 leading-relaxed">
+              これは、あなたが保険会社に対して<span class="text-sm font-black text-red-600 underline decoration-red-300 font-number"><span id="text-cost-total-amount">0</span>円</span>もの隠れた手数料を支払っているのと同じです！
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-white/90 backdrop-blur-md border border-slate-100 shadow-premium rounded-3xl p-6 fade-in-up">
+        <h3 class="text-sm font-bold text-slate-400 mb-4 flex items-center gap-1.5">
+          <i data-lucide="share-2" class="w-4.5 h-4.5 text-emerald-500"></i>
+          この診断結果を共有・保存する
+        </h3>
+        
+        <p class="text-xs text-slate-500 mb-4 leading-relaxed">
+          家族への相談や、将来のメモ代わりに結果を保存・シェアしましょう。周りの人にも「本当のコスト」を教えてあげてください。
+        </p>
+
+        <div class="grid grid-cols-3 gap-2">
+          <a id="share-line" href="#" target="_blank" class="flex flex-col items-center justify-center p-3 bg-[#06C755] hover:bg-[#05b04b] text-white rounded-2xl transition-all active:scale-95 shadow-sm">
+            <i data-lucide="message-circle" class="w-5 h-5 mb-1.5"></i>
+            <span class="text-[10px] font-bold">LINEで送る</span>
+          </a>
+          
+          <a id="share-x" href="#" target="_blank" class="flex flex-col items-center justify-center p-3 bg-black hover:bg-slate-900 text-white rounded-2xl transition-all active:scale-95 shadow-sm">
+            <i data-lucide="twitter" class="w-5 h-5 mb-1.5"></i>
+            <span class="text-[10px] font-bold">Xでポスト</span>
+          </a>
+          
+          <button id="btn-copy" class="flex flex-col items-center justify-center p-3 bg-slate-700 hover:bg-slate-800 text-white rounded-2xl transition-all active:scale-95 shadow-sm relative">
+            <i data-lucide="copy" class="w-5 h-5 mb-1.5"></i>
+            <span class="text-[10px] font-bold">結果をコピー</span>
+            <span id="copy-tooltip" class="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-slate-950 text-white text-[9px] font-bold px-2 py-1 rounded opacity-0 transition-opacity pointer-events-none whitespace-nowrap">コピーしました！</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="bg-slate-800 text-slate-100 shadow-premium rounded-3xl p-6 fade-in-up">
+        <h3 class="text-sm font-bold text-emerald-400 mb-4 flex items-center gap-1.5">
+          <i data-lucide="lightbulb" class="w-4.5 h-4.5"></i>
+          知って得するマネー知恵袋
+        </h3>
+        <ul class="space-y-4 text-xs leading-relaxed text-slate-300">
+          <li class="flex gap-2">
+            <span class="text-emerald-400 font-bold shrink-0">1.</span>
+            <span><strong>「貯蓄」と「保障」は分けて考えよう：</strong> 貯蓄型保険の想定利回りは、支払った保険料の「全額」にかかるわけではありません。死亡保障などの経費や保険会社の手数料がたっぷり引かれた**残りの金額**に対してのみかかるため、実際の利回りは極端に下がってしまいます。</span>
+          </li>
+          <li class="flex gap-2">
+            <span class="text-emerald-400 font-bold shrink-0">2.</span>
+            <span><strong>保障が必要なら「掛け捨て型」で安く備える：</strong> 万が一の死亡保障などは、ネット保険などの「掛け捨て型保険」を個別に契約すれば、毎月わずか数千円で十分な保障を確保できます。無理に「貯蓄」と「保障」を一つにまとめる必要はありません。</span>
+          </li>
+          <li class="flex gap-2">
+            <span class="text-emerald-400 font-bold shrink-0">3.</span>
+            <span><strong>浮いたお金は「新NISA」などで賢く自力運用：</strong> 保険会社に高い手数料を取られる代わりに、浮いたお金を国の非課税制度（新NISAなど）を活用し、低コストなインデックスファンドで自ら運用（つみたて投資）すれば、将来手元に残るお金は劇的に変わる可能性があります。</span>
+          </li>
+        </ul>
+      </section>
+
+    </div>
+
+  </div>
+
+  <script>
+    // 各インプット要素の取得
+    const elements = {
+      premiumNum: document.getElementById('monthly-premium-number'),
+      periodNum: document.getElementById('payment-period-number'),
+      returnNum: document.getElementById('return-amount-number'),
+      yieldNum: document.getElementById('surface-yield-number'),
+      calcBtn: document.getElementById('calc-btn'),
+      resultsArea: document.getElementById('results-area'),
+      
+      // 共有要素
+      shareLine: document.getElementById('share-line'),
+      shareX: document.getElementById('share-x'),
+      btnCopy: document.getElementById('btn-copy'),
+      copyTooltip: document.getElementById('copy-tooltip'),
+      
+      // 表示要素
+      totalPaidDisplay: document.getElementById('total-paid-display'),
+      returnAmountDisplay: document.getElementById('return-amount-display'),
+      gainDisplay: document.getElementById('gain-display'),
+      gainPercentage: document.getElementById('gain-percentage'),
+      gainCard: document.getElementById('gain-card'),
+      gainIconBg: document.getElementById('gain-icon-bg'),
+      gainIcon: document.getElementById('gain-icon'),
+      gainLabel: document.getElementById('gain-label'),
+      
+      barTotalPaid: document.getElementById('bar-total-paid'),
+      barReturn: document.getElementById('bar-return'),
+      
+      gaugeYield: document.getElementById('gauge-yield'),
+      gaugeCost: document.getElementById('gauge-cost'),
+      valYield: document.getElementById('val-yield'),
+      valCost: document.getElementById('val-cost'),
+      totalCostAmount: document.getElementById('total-cost-amount'),
+      costAmountCard: document.getElementById('cost-amount-card'),
+      
+      conclusionBox: document.getElementById('conclusion-box'),
+      conclusionMoneyHighlight: document.getElementById('conclusion-money-highlight'),
+      textRealYield: document.getElementById('text-real-yield'),
+      textSurfaceYield: document.getElementById('text-surface-yield'),
+      textRealCost: document.getElementById('text-real-cost'),
+      textCostTotalAmount: document.getElementById('text-cost-total-amount')
+    };
+
+    // 入力ボックスの検証と連動設定（カンマ区切り対応版）
+    function bindInput(numEl, name) {
+      numEl.addEventListener('input', (e) => {
+        if (name === 'premium' || name === 'return' || name === 'period') {
+            // 数字以外を除外してカンマ区切りにフォーマット
+            let val = e.target.value.replace(/[^\d]/g, '');
+            if (val) {
+                e.target.value = parseInt(val, 10).toLocaleString('ja-JP');
+            }
+        } else if (name === 'yield') {
+            // 小数点と数字のみ許可
+            e.target.value = e.target.value.replace(/[^\d.]/g, '');
+        }
+        triggerLiveCalculation();
+      });
+      
+      numEl.addEventListener('change', (e) => {
+        // カンマを外して数値化
+        let rawVal = e.target.value.replace(/,/g, '');
+        let val = parseFloat(rawVal);
+        let min = 1000;
+        let max = 500000;
+        
+        if (name === 'period') {
+          min = 1; max = 50;
+        } else if (name === 'return') {
+          min = 10000; max = 100000000;
+        } else if (name === 'yield') {
+          min = 0.0; max = 20.0;
+        }
+        
+        if (isNaN(val)) val = min;
+        if (val < min) val = min;
+        if (val > max) val = max;
+        
+        if (name === 'yield') {
+            e.target.value = val;
+        } else {
+            e.target.value = val.toLocaleString('ja-JP');
+        }
+        triggerLiveCalculation();
+      });
+    }
+
+    // 値調整ポチポチボタンの処理（カンマ区切り対応版）
+    function adjustValue(idType, delta) {
+      let numEl, min, max;
+      if (idType === 'monthly-premium') {
+        numEl = elements.premiumNum;
+        min = 1000; max = 500000;
+      } else if (idType === 'payment-period') {
+        numEl = elements.periodNum;
+        min = 1; max = 50;
+      } else if (idType === 'return-amount') {
+        numEl = elements.returnNum;
+        min = 10000; max = 100000000;
+      } else if (idType === 'surface-yield') {
+        numEl = elements.yieldNum;
+        min = 0.0; max = 20.0;
+      }
+
+      // 現在の値からカンマを外して計算
+      let rawVal = numEl.value.replace(/,/g, '');
+      let newVal = parseFloat(rawVal) + delta;
+      
+      if (newVal < min) newVal = min;
+      if (newVal > max) newVal = max;
+
+      // 再度フォーマットして入力欄に戻す
+      if (idType === 'surface-yield') {
+          numEl.value = newVal.toFixed(1);
+      } else {
+          numEl.value = newVal.toLocaleString('ja-JP');
+      }
+      
+      triggerLiveCalculation();
+    }
+
+    // 診断ボタンが一度押されたかどうかのフラグ
+    let hasCalculated = false;
+
+    // 診断ボタンクリックイベント
+    elements.calcBtn.addEventListener('click', () => {
+      if (!hasCalculated) {
+        elements.resultsArea.classList.remove('hidden');
+        elements.resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        hasCalculated = true;
+        // ボタンのデザインをマイルドに変更（リアルタイムで変更される旨を伝える）
+        elements.calcBtn.innerHTML = '<i data-lucide="refresh-cw" class="w-5 h-5 animate-spin"></i><span>リアルタイムで再分析中...</span>';
+        elements.calcBtn.classList.remove('from-emerald-500', 'to-teal-600');
+        elements.calcBtn.classList.add('from-slate-600', 'to-slate-700');
+        lucide.createIcons();
+      }
+      calculateResults();
+    });
+
+    // 入力値変更時に自動計算（一度診断ボタンを押した後はリアルタイム駆動）
+    function triggerLiveCalculation() {
+      if (hasCalculated) {
+        calculateResults();
+      }
+    }
+
+    // 数値のフォーマット（カンマ区切り）
+    function formatCurrency(amount) {
+      return Math.round(amount).toLocaleString('ja-JP');
+    }
+
+    // カウントアップアニメーション
+    function animateNumber(element, start, end, duration, decimals = 0, suffix = "") {
+      let startTimestamp = null;
+      const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const currentVal = progress * (end - start) + start;
+        
+        if (decimals > 0) {
+          element.innerText = currentVal.toFixed(decimals) + suffix;
+        } else {
+          element.innerText = formatCurrency(currentVal) + suffix;
+        }
+        
+        if (progress < 1) {
+          window.requestAnimationFrame(step);
+        } else {
+          if (decimals > 0) {
+            element.innerText = end.toFixed(decimals) + suffix;
+          } else {
+            element.innerText = formatCurrency(end) + suffix;
+          }
+        }
+      };
+      window.requestAnimationFrame(step);
+    }
+
+    // 計算と結果の適用
+    function calculateResults() {
+      // 入力値からカンマを削除して数値として取得
+      const A = parseFloat(elements.premiumNum.value.replace(/,/g, '')) || 0; // 毎月の保険料
+      const B = parseFloat(elements.periodNum.value.replace(/,/g, '')) || 0;   // 支払い期間（年）
+      const C = parseFloat(elements.returnNum.value.replace(/,/g, '')) || 0;   // 解約返戻金
+      const D = parseFloat(elements.yieldNum.value) || 0;    // 想定利回り（%）
+
+      // STEP 1: 総払込額 = A × 12ヶ月 × B
+      const totalPaid = A * 12 * B;
+      
+      // STEP 2: 増えた金額 = C - 総払込額
+      const netGain = C - totalPaid;
+      
+      // STEP 3: 実質利回り(%) = (2 × 増えた金額) / (総払込額 + C) / B × 100
+      let realYield = 0;
+      if (totalPaid + C > 0 && B > 0) {
+        realYield = (2 * netGain) / (totalPaid + C) / B * 100;
+      }
+      
+      // STEP 4: 実質コスト(%) = D - 実質利回り
+      const realCost = D - realYield;
+      
+      // 追加オプション：削られた手数料総額（円）の計算
+      // 金融庁の積立シミュレーターと同じ「毎月複利（期首払い）」の数式で、本来増えるはずだった理想の金額（FV）を計算
+      const r = D / 100; // 年利（想定利回り）を小数に変換
+      const months = B * 12; // 支払い月数
+      let idealAmount = 0;
+
+      if (r > 0) {
+        // 毎月複利の数式: 毎月の保険料(A) × { (1 + 月利)^月数 - 1 } / 月利 × (1 + 月利)
+        idealAmount = A * (Math.pow(1 + r/12, months) - 1) / (r/12) * (1 + r/12);
+      } else {
+        idealAmount = totalPaid; // 利回り0%の場合は元本そのまま
+      }
+
+      // 金融庁の本来の金額 － 実際の解約返戻金(C) ＝ 保険会社に抜かれた実質手数料
+      const totalCostAmount = idealAmount - C;
+
+      // --- UIのアップデートとアニメーション ---
+
+      // 1. お金の流れ・バーの比率
+      elements.totalPaidDisplay.innerText = formatCurrency(totalPaid) + "円";
+      elements.returnAmountDisplay.innerText = formatCurrency(C) + "円";
+
+      const maxVal = Math.max(totalPaid, C);
+      const totalPaidPercent = (totalPaid / maxVal) * 100;
+      const returnPercent = (C / maxVal) * 100;
+
+      elements.barTotalPaid.style.width = `${totalPaidPercent}%`;
+      elements.barReturn.style.width = `${returnPercent}%`;
+
+      // 2. 増えた金額カードのスタイリング（元本割れか否か）
+      const prevGain = parseFloat(elements.gainDisplay.getAttribute('data-val') || 0);
+      elements.gainDisplay.setAttribute('data-val', netGain);
+
+      const gainPercentValue = totalPaid > 0 ? (netGain / totalPaid) * 100 : 0;
+
+      if (netGain >= 0) {
+        // 利益あり：エメラルド風
+        elements.gainCard.className = "mt-4 p-4 rounded-2xl flex items-center justify-between border border-emerald-100 bg-emerald-50/40 transition-all";
+        elements.gainIconBg.className = "p-2.5 rounded-xl flex items-center justify-center bg-emerald-100 text-emerald-600";
+        elements.gainIcon.setAttribute('data-lucide', 'trending-up');
+        elements.gainLabel.innerText = "実際に増えた金額 (利益)";
+        elements.gainPercentage.className = "text-xs font-extrabold px-2.5 py-1 rounded-full font-number bg-emerald-100 text-emerald-700";
+        
+        animateNumber(elements.gainDisplay, prevGain, netGain, 800, 0, "円");
+        animateNumber(elements.gainPercentage, 0, gainPercentValue, 800, 1, "%増");
+      } else {
+        // 元本割れ：警告コーラル/レッド
+        elements.gainCard.className = "mt-4 p-4 rounded-2xl flex items-center justify-between border border-red-100 bg-red-50/40 transition-all";
+        elements.gainIconBg.className = "p-2.5 rounded-xl flex items-center justify-center bg-red-100 text-red-600";
+        elements.gainIcon.setAttribute('data-lucide', 'trending-down');
+        elements.gainLabel.innerText = "元本割れ (損失・削られた額)";
+        elements.gainPercentage.className = "text-xs font-extrabold px-2.5 py-1 rounded-full font-number bg-red-100 text-red-700";
+        
+        animateNumber(elements.gainDisplay, prevGain, netGain, 800, 0, "円");
+        animateNumber(elements.gainPercentage, 0, Math.abs(gainPercentValue), 800, 1, "%減");
+      }
+      lucide.createIcons();
+
+      // 3. 円形アニメーションゲージと実質数値の更新
+      const r_gauge = 48;
+      const circumference = 2 * Math.PI * r_gauge; // 約301.6
+
+      // 実質利回りゲージのアップデート (マイナスの場合は0%として描画)
+      const yieldGaugeVal = Math.max(0, Math.min(10, realYield)); // 10%を最大とする
+      const yieldOffset = circumference - (yieldGaugeVal / 10) * circumference;
+      elements.gaugeYield.style.strokeDashoffset = yieldOffset;
+      animateNumber(elements.valYield, parseFloat(elements.valYield.innerText), realYield, 800, 2);
+
+      // 実質コストゲージのアップデート (マイナスの場合は0%として描画)
+      const costGaugeVal = Math.max(0, Math.min(10, realCost)); // 10%を最大とする
+      const costOffset = circumference - (costGaugeVal / 10) * circumference;
+      elements.gaugeCost.style.strokeDashoffset = costOffset;
+      animateNumber(elements.valCost, parseFloat(elements.valCost.innerText), realCost, 800, 2);
+
+      // 4. 手数料総額カードの更新
+      if (totalCostAmount > 0) {
+        elements.costAmountCard.classList.remove('hidden');
+        animateNumber(elements.totalCostAmount, parseFloat(elements.totalCostAmount.getAttribute('data-val') || 0), totalCostAmount, 800);
+        elements.totalCostAmount.setAttribute('data-val', totalCostAmount);
+      } else {
+        // 手数料がマイナスの奇跡的なケース
+        elements.costAmountCard.classList.add('hidden');
+      }
+
+      // 5. 結論メッセージの書き換え
+      elements.textRealYield.innerText = realYield.toFixed(2);
+      elements.textSurfaceYield.innerText = D.toFixed(2);
+      elements.textRealCost.innerText = realCost.toFixed(2);
+      
+      if (totalCostAmount > 0) {
+        elements.conclusionMoneyHighlight.classList.remove('hidden');
+        animateNumber(elements.textCostTotalAmount, 0, totalCostAmount, 800);
+      } else {
+        elements.conclusionMoneyHighlight.classList.add('hidden');
+      }
+
+      // 元本割れしているか否かで結論のアラートカラーとメッセージに少しエッジを効かせる
+      if (netGain < 0) {
+        // 元本割れ時は真っ赤な警告に
+        elements.conclusionBox.style.background = "linear-gradient(135deg, #FFF1F2 0%, #FFF 100%)";
+        elements.conclusionBox.className = "relative overflow-hidden border border-red-300 shadow-glowCoral rounded-3xl p-6 fade-in-up";
+        
+        elements.conclusionText.innerHTML = `
+          この保険は、見かけ上は増えているように見えますが、実態は<span class="text-red-600 font-extrabold bg-red-100 px-1 py-0.5 rounded text-base">【元本割れ：年利 ${realYield.toFixed(2)}%】</span>の損失商品です。市場の想定利回りが<span class="text-slate-800 font-bold bg-slate-100 px-1 py-0.5 rounded text-base">【${D.toFixed(2)}%】</span>だとすると、差額の<span class="text-red-700 font-black bg-red-100 px-1 py-0.5 rounded text-base">【${realCost.toFixed(2)}%】</span>分は、保険会社の手数料（実質コスト）と元本毀損によってあなたから削り取られています！
+        `;
+      } else {
+        // 通常のコスト警告（マイルドな警告赤・オレンジ）
+        elements.conclusionBox.style.background = "linear-gradient(135deg, #FFF7ED 0%, #FFF 100%)";
+        elements.conclusionBox.className = "relative overflow-hidden border border-orange-200 shadow-premium rounded-3xl p-6 fade-in-up";
+        
+        elements.conclusionText.innerHTML = `
+          この保険は、見かけ上は増えているように見えますが、実態は<span class="text-emerald-600 font-bold bg-emerald-50 px-1 py-0.5 rounded text-base">【年利 ${realYield.toFixed(2)}%】</span>でしか増えない商品です。市場の想定利回りが<span class="text-slate-800 font-bold bg-slate-100 px-1 py-0.5 rounded text-base">【${D.toFixed(2)}%】</span>だとすると、差額の<span class="text-red-600 font-bold bg-red-50 px-1 py-0.5 rounded text-base">【${realCost.toFixed(2)}%】</span>分は保険会社の手数料（実質コスト）としてあなたから削られています！
+        `;
+      }
+
+      // 6. シェア用テキストの生成とボタンURLの更新
+      updateShareLinks(A, B, C, D, realYield, realCost, totalCostAmount, totalPaid, netGain);
+    }
+
+    // 共有テキストとリンクの動的更新
+    let currentShareText = "";
+    function updateShareLinks(A, B, C, D, realYield, realCost, totalCostAmount, totalPaid, netGain) {
+      // ページのURLを取得（ローカルファイルの場合は紹介用URL）
+      let shareUrl = window.location.href;
+      if (shareUrl.startsWith('file://')) {
+        shareUrl = "https://mstk-code.github.io/insurance-yield-calculator/"; // ローカル起動時のデフォルト紹介URL
+      }
+      
+      const gainText = netGain >= 0 
+        ? `📈 実際に増えた額：+${formatCurrency(netGain)}円`
+        : `📉 元本割れ損失：-${formatCurrency(Math.abs(netGain))}円`;
+
+      // 感情に訴えかけるメッセージ構成
+      currentShareText = `【衝撃】保険の「本当のコスト」を暴いてみた！
+💸 支払総額：${formatCurrency(totalPaid)}円
+💰 解約返戻金：${formatCurrency(C)}円
+${gainText}
+📊 実質利回り：${realYield.toFixed(2)}% / 年
+❌ 実質コスト(手数料)：${realCost.toFixed(2)}% / 年
+
+😱 保険会社に抜かれている手数料総額（推定）：${formatCurrency(totalCostAmount)}円！
+
+見かけの利回りに騙されてない？あなたも30秒で本当の利回りを暴いてみて👇
+#保険の実質コスト暴きツール`;
+
+      // エンコード
+      const encodedText = encodeURIComponent(currentShareText);
+      const encodedUrl = encodeURIComponent(shareUrl);
+
+      // ボタンURLの更新
+      elements.shareLine.href = `https://social-plugins.line.me/lineit/share?url=${encodedUrl}&text=${encodedText}`;
+      elements.shareX.href = `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`;
+    }
+
+    // コピーボタンのイベントリスナー登録
+    elements.btnCopy.addEventListener('click', () => {
+      let shareUrl = window.location.href;
+      if (shareUrl.startsWith('file://')) {
+        shareUrl = "https://mstk-code.github.io/insurance-yield-calculator/";
+      }
+      
+      const textToCopy = `${currentShareText}\n\n診断はこちらから👇\n${shareUrl}`;
+      
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        // コピーツールチップ表示
+        elements.copyTooltip.classList.remove('opacity-0');
+        elements.copyTooltip.classList.add('opacity-100');
+        setTimeout(() => {
+          elements.copyTooltip.classList.remove('opacity-100');
+          elements.copyTooltip.classList.add('opacity-0');
+        }, 2000);
+      }).catch(err => {
+        console.error('コピーに失敗しました: ', err);
+      });
+    });
+
+    bindInput(elements.premiumNum, 'premium');
+    bindInput(elements.periodNum, 'period');
+    bindInput(elements.returnNum, 'return');
+    bindInput(elements.yieldNum, 'yield');
+    
+    // Lucideアイコンレンダリング
+    lucide.createIcons();
+  </script>
+</body>
+</html>
+
+```
