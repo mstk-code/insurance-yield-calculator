@@ -188,6 +188,19 @@
 
           <div>
             <div class="flex justify-between text-xs font-bold text-slate-500 mb-1">
+              <span class="flex items-center gap-1.5">
+                本来増えるはずの額（想定）
+                <span class="px-1.5 py-0.5 bg-slate-200 text-slate-600 text-[9px] rounded font-bold">金融庁基準</span>
+              </span>
+              <span id="fsa-amount-display" class="font-number font-extrabold text-sm text-blue-600">0円</span>
+            </div>
+            <div class="w-full h-3.5 bg-slate-100 rounded-full overflow-hidden">
+              <div id="bar-fsa" class="h-full bg-blue-500 rounded-full transition-all duration-1000 ease-out" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-bold text-slate-500 mb-1">
               <span>戻ってくる額（解約返戻金）</span>
               <span id="return-amount-display" class="font-number font-extrabold text-sm text-emerald-600">0円</span>
             </div>
@@ -281,7 +294,7 @@
           </div>
         </div>
         <p class="text-[11px] text-slate-500 mt-2.5 leading-relaxed">
-          ※想定利回り通りに手数料なしで運用できた場合と、解約返戻金の実際の差額（＝保険会社に削られたコストの推定額）です。
+          ※想定利回り通りに手数料なしで運用できた場合（ガチ毎月複利計算）と、解約返戻金の実際の差額です。
         </p>
       </section>
 
@@ -379,6 +392,7 @@
       
       // 表示要素
       totalPaidDisplay: document.getElementById('total-paid-display'),
+      fsaAmountDisplay: document.getElementById('fsa-amount-display'),
       returnAmountDisplay: document.getElementById('return-amount-display'),
       gainDisplay: document.getElementById('gain-display'),
       gainPercentage: document.getElementById('gain-percentage'),
@@ -388,6 +402,7 @@
       gainLabel: document.getElementById('gain-label'),
       
       barTotalPaid: document.getElementById('bar-total-paid'),
+      barFsa: document.getElementById('bar-fsa'),
       barReturn: document.getElementById('bar-return'),
       
       gaugeYield: document.getElementById('gauge-yield'),
@@ -579,17 +594,33 @@
       // 金融庁の本来の金額 － 実際の解約返戻金(C) ＝ 保険会社に抜かれた実質手数料
       const totalCostAmount = idealAmount - C;
 
+      // 追加オプション2：金融庁シミュレーター基準（年次複利）での本来の額（FV）
+      let fsaAmount = 0;
+      if (r > 0) {
+        // 年利で毎年1回まとめて加算される簡略化された数式
+        fsaAmount = (A * 12) * (Math.pow(1 + r, B) - 1) / r * (1 + r);
+      } else {
+        fsaAmount = totalPaid;
+      }
+
       // --- UIのアップデートとアニメーション ---
 
       // 1. お金の流れ・バーの比率
       elements.totalPaidDisplay.innerText = formatCurrency(totalPaid) + "円";
       elements.returnAmountDisplay.innerText = formatCurrency(C) + "円";
 
-      const maxVal = Math.max(totalPaid, C);
+      // 金融庁基準の数値にアニメーションを適用
+      const prevFsa = parseFloat(elements.fsaAmountDisplay.getAttribute('data-val') || 0);
+      animateNumber(elements.fsaAmountDisplay, prevFsa, fsaAmount, 800, 0, "円");
+      elements.fsaAmountDisplay.setAttribute('data-val', fsaAmount);
+
+      const maxVal = Math.max(totalPaid, C, fsaAmount);
       const totalPaidPercent = (totalPaid / maxVal) * 100;
+      const fsaPercent = (fsaAmount / maxVal) * 100;
       const returnPercent = (C / maxVal) * 100;
 
       elements.barTotalPaid.style.width = `${totalPaidPercent}%`;
+      elements.barFsa.style.width = `${fsaPercent}%`;
       elements.barReturn.style.width = `${returnPercent}%`;
 
       // 2. 増えた金額カードのスタイリング（元本割れか否か）
