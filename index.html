@@ -579,14 +579,16 @@
       const realCost = D - realYield;
       
       // 追加オプション：削られた手数料総額（円）の計算
-      // 金融庁の積立シミュレーターと同じ「毎月複利（期首払い）」の数式で、本来増えるはずだった理想の金額（FV）を計算
+      // 【完全一致】金融庁「つみたてシミュレーター」の正確な計算ロジック
       const r = D / 100; // 年利（想定利回り）を小数に変換
       const months = B * 12; // 支払い月数
       let idealAmount = 0;
 
       if (r > 0) {
-        // 毎月複利の数式: 毎月の保険料(A) × { (1 + 月利)^月数 - 1 } / 月利 × (1 + 月利)
-        idealAmount = A * (Math.pow(1 + r/12, months) - 1) / (r/12) * (1 + r/12);
+        // 1. 年利から正確な月利を逆算（ (1+年利)^(1/12) - 1 ）
+        const r_monthly_ideal = Math.pow(1 + r, 1 / 12) - 1;
+        // 2. 毎月積立（期末払い）での複利計算
+        idealAmount = A * (Math.pow(1 + r_monthly_ideal, months) - 1) / r_monthly_ideal;
       } else {
         idealAmount = totalPaid; // 利回り0%の場合は元本そのまま
       }
