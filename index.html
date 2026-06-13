@@ -598,14 +598,16 @@
       // A = 毎月の保険料
       // B = 支払い期間・年数
       // D = 設計書の想定利回り・年利%
-      const r_fsa = D / 100; // 年利を小数に
+      const r_annual = D / 100;
 
       let fsaAmount = 0;
-      if (r_fsa > 0) {
-        // 金融庁シミュレーターの「年1回積立加算（期首払い・期末回収）」の正確な数学的再現
-        // 年間積立額 = 毎月の保険料 A × 12
-        const annualPremium = A * 12;
-        fsaAmount = annualPremium * (Math.pow(1 + r_fsa, B) - 1) / r_fsa * (1 + r_fsa);
+      if (r_annual > 0) {
+        // 【完全一致】金融庁「つみたてシミュレーター」の正確な計算ロジック
+        // 1. 年利から正確な月利を逆算（ (1+年利)^(1/12) - 1 ）
+        const r_monthly = Math.pow(1 + r_annual, 1 / 12) - 1;
+        // 2. 毎月積立（期末払い）での複利計算
+        const totalMonths = B * 12;
+        fsaAmount = A * (Math.pow(1 + r_monthly, totalMonths) - 1) / r_monthly;
       } else {
         fsaAmount = A * 12 * B;
       }
